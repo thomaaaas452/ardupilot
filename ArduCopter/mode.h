@@ -39,6 +39,8 @@ public:
         AUTOROTATE =   26,  // Autonomous autorotation
         AUTO_RTL =     27,  // Auto RTL, this is not a true mode, AUTO will report as this mode if entered to perform a DO_LAND_START Landing sequence
         TURTLE =       28,  // Flip over after crash
+        ATLO =         29,
+        SEMIAUTO =     30,
     };
 
     // constructor
@@ -1138,6 +1140,62 @@ private:
     bool _precision_loiter_enabled;
     bool _precision_loiter_active; // true if user has switched on prec loiter
 #endif
+
+};
+
+class ModeAttackLoiter : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::ATLO; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; };
+    bool is_autopilot() const override { return false; }
+    bool has_user_takeoff(bool must_navigate) const override { return false; }
+    bool allows_autotune() const override { return false; }
+
+protected:
+
+    const char *name() const override { return "ATCLO"; }
+    const char *name4() const override { return "ATLO"; }
+
+
+private:
+
+
+};
+
+class ModeSemiAuto : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::SEMIAUTO; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; };
+    bool is_autopilot() const override { return false; }
+    bool has_user_takeoff(bool must_navigate) const override { return false; }
+    bool allows_autotune() const override { return false; }
+
+protected:
+
+    const char *name() const override { return "SAUTO"; }
+    const char *name4() const override { return "SEAU"; }
+
+
+private:
+
 
 };
 

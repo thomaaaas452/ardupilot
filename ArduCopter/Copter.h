@@ -69,6 +69,7 @@
 #include <AC_Sprayer/AC_Sprayer.h>          // Crop sprayer library
 #include <AP_ADSB/AP_ADSB.h>                // ADS-B RF based collision avoidance module library
 #include <AP_Proximity/AP_Proximity.h>      // ArduPilot proximity sensor library
+#include <AP_K210/AP_K210.h>
 
 // Configuration
 #include "defines.h"
@@ -217,6 +218,8 @@ public:
     friend class ModeZigZag;
     friend class ModeAutorotate;
     friend class ModeTurtle;
+    friend class ModeAttackLoiter;
+    friend class ModeSemiAuto;
 
     Copter(void);
 
@@ -239,6 +242,8 @@ private:
     RC_Channel *channel_yaw;
 
     AP_Logger logger;
+
+    AP_K210 k210{};
 
     // flight modes convenience array
     AP_Int8 *flight_modes;
@@ -660,6 +665,7 @@ private:
     void rc_loop();
     void throttle_loop();
     void update_batt_compass(void);
+    void update_K210(void);
     void fourhundred_hz_logging();
     void ten_hz_logging_loop();
     void twentyfive_hz_logging();
@@ -989,6 +995,12 @@ private:
 #endif
 #if MODE_TURTLE_ENABLED == ENABLED
     ModeTurtle mode_turtle;
+#endif
+#if MODE_ATLO_ENABLED == ENABLED
+    ModeAttackLoiter mode_attackloiter;
+#endif
+#if MODE_SEMIAUTO_ENABLED == ENABLED
+    ModeSemiAuto mode_semiauto;
 #endif
 
     // mode.cpp

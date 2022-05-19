@@ -323,6 +323,16 @@
 # define MODE_TURTLE_ENABLED !HAL_MINIMIZE_FEATURES && !defined(DISABLE_DSHOT) && FRAME_CONFIG != HELI_FRAME
 #endif
 
+// Loiter mode - allows vehicle to hold global position
+#ifndef MODE_ATLO_ENABLED
+# define MODE_ATLO_ENABLED ENABLED
+#endif
+
+// Loiter mode - allows vehicle to hold global position
+#ifndef MODE_SEMIAUTO_ENABLED
+# define MODE_SEMIAUTO_ENABLED ENABLED
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////

@@ -175,6 +175,18 @@ Mode *Copter::mode_from_mode_num(const Mode::Number mode)
             break;
 #endif
 
+#if MODE_ATLO_ENABLED == ENABLED
+        case Mode::Number::ATLO:
+            ret = &mode_atlo;
+            break;
+#endif
+
+#if MODE_SEMIAUTO_ENABLED == ENABLED
+        case Mode::Number::SEMIAUTO:
+            ret = &mode_semiauto;
+            break;
+#endif
+
         default:
             break;
     }
