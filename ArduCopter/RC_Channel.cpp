@@ -613,6 +613,14 @@ bool RC_Channel_Copter::do_aux_function(const aux_func_t ch_option, const AuxSwi
             }
             break;
 
+        case AUX_FUNC::ATLO:
+            do_aux_function_change_mode(Mode::Number::ATLO, ch_flag);
+            break;
+
+        case AUX_FUNC::SEMIAUTO:
+            do_aux_function_change_mode(Mode::Number::SEMIAUTO, ch_flag);
+            break;
+
     default:
         return RC_Channel::do_aux_function(ch_option, ch_flag);
     }

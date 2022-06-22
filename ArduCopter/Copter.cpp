@@ -159,7 +159,8 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #endif
     SCHED_TASK_CLASS(AP_Notify,            &copter.notify,              update,          50,  90,  78),
     SCHED_TASK(one_hz_loop,            1,    100,  81),
-    SCHED_TASK(update_k210,         400,   100,  82),
+    SCHED_TASK(update_K210,           400,   100,  82),
+    SCHED_TASK(update_height2servo,   10,    100,  83),
     SCHED_TASK(ekf_check,             10,     75,  84),
     SCHED_TASK(check_vibration,       10,     50,  87),
     SCHED_TASK(gpsglitch_check,       10,     50,  90),
@@ -495,9 +496,311 @@ void Copter::update_batt_compass(void)
         compass.read();
     }
 }
-void Copter::update_k210(void)
+void Copter::update_K210(void)
 {
     k210.update();
+}
+
+void Copter::update_height2servo(void)
+{
+
+    float distance_front_cm = (int16_t)(k210.cz*0.1);
+    float distance_down_cm = rangefinder.distance_cm_orient(ROTATION_PITCH_270);
+    static uint8_t step = 0;
+    static uint32_t jiebao_time_ms = 0;
+    // bool jiebao_success = false;
+    static uint32_t qibao_time_ms = 0;
+
+    uint16_t rcin_jiebao_first = hal.rcin->read(8);
+    uint16_t rcin_jiebao_second = hal.rcin->read(9);
+    uint16_t rcin_gaodu = hal.rcin->read(6);
+    uint16_t rcin_juli  = hal.rcin->read(7);
+
+    SRV_Channel::Aux_servo_function_t function_jiebao = SRV_Channels::get_motor_function(4); // set servo5 as prearm
+    SRV_Channel::Aux_servo_function_t function_qibao = SRV_Channels::get_motor_function(5);// set servo6 as qibao
+
+    SRV_Channels::set_output_pwm(function_jiebao, 0); 
+    SRV_Channels::set_output_pwm(function_qibao, 0); 
+
+    if(g2.yinxin_out != 0)
+    {
+        switch(step){
+        case 0:
+            if(rcin_jiebao_first < 1800)
+            {
+                jiebao_time_ms = millis();
+                SRV_Channels::set_output_pwm(function_jiebao, 0); 
+            }
+            else if(rcin_jiebao_first > 1800)
+            {
+                if(millis() - jiebao_time_ms < 500){
+                    SRV_Channels::set_output_pwm(function_jiebao, 2000); 
+                }
+                else{
+                    SRV_Channels::set_output_pwm(function_jiebao, 0); 
+                    step = 1;
+                }
+            }
+            break;
+
+        case 1:
+            if(rcin_jiebao_second < 1800)
+            {
+                jiebao_time_ms = millis();
+                SRV_Channels::set_output_pwm(function_jiebao, 0);
+            }
+            else if(rcin_jiebao_second > 1800)
+            {
+                if(millis() - jiebao_time_ms < 500){
+                    SRV_Channels::set_output_pwm(function_jiebao, 2000); 
+                }
+                else{
+                    SRV_Channels::set_output_pwm(function_jiebao, 0); 
+                    step = 2;
+                }
+            }
+            break;
+
+        case 2:
+            if(g2.yinxin_channel == 1)
+            {
+                if((rcin_juli > 1200)&&(copter.flightmode->mode_number() != Mode::Number::ATLO))
+                {
+                    qibao_time_ms = millis();
+                    SRV_Channels::set_output_pwm(function_qibao, 0); 
+                }
+                else{
+                    if(millis() - qibao_time_ms < 500){
+                        SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                    }
+                    else{
+                        SRV_Channels::set_output_pwm(function_qibao, 0); 
+                        step = 3;
+                    }
+                }
+                // break;  
+            }
+
+            else if(g2.yinxin_channel == 2)
+            {
+                if(rcin_gaodu > 1800){
+                    step = 3;
+                }
+                // if(rcin_gaodu < 1800)
+                // {
+                //     qibao_time_ms = millis();
+                //     SRV_Channels::set_output_pwm(function_qibao, 0); 
+                // }
+                // else{
+                //     if(millis() - qibao_time_ms < 500){
+                //         SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                //     }
+                //     else{
+                //         SRV_Channels::set_output_pwm(function_qibao, 0); 
+                //         step = 3;
+                //     }
+                // }
+                // break;
+            }
+            break;
+
+        case 3:
+            if(g2.yinxin_channel == 1)
+            {
+                if(distance_front_cm >= 20)
+                {
+                    //6月4日晚上添加
+                    qibao_time_ms = millis();
+                    //
+                    SRV_Channels::set_output_pwm(function_qibao, 0); 
+                }
+                else{
+                    //6月4日晚上添加
+                    if(millis() - qibao_time_ms < 500){
+                        SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                    }
+                    else{
+                        SRV_Channels::set_output_pwm(function_qibao, 0); 
+                    }
+                    //
+                    // SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                }
+                // break;
+            }
+
+            if(g2.yinxin_channel == 2)
+            {
+                if((distance_down_cm>150)||(distance_down_cm<90))
+                {
+                    qibao_time_ms = millis();
+                    SRV_Channels::set_output_pwm(function_qibao, 0); 
+                }
+                else{
+                    if(millis() - qibao_time_ms < 500){
+                        SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                    }
+                    else{
+                        SRV_Channels::set_output_pwm(function_qibao, 0); 
+                        step = 4;
+                    }
+                }
+                // break;
+            }
+            break;
+
+        case 4:
+            if(g2.yinxin_channel == 2)
+            {
+                if((distance_down_cm > 130)||(distance_down_cm < 110))
+                {
+                    qibao_time_ms = millis();
+                    SRV_Channels::set_output_pwm(function_qibao, 0); 
+                }
+                else{
+                    if(millis() - qibao_time_ms < 500){
+                        SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                    }
+                    else{
+                        SRV_Channels::set_output_pwm(function_qibao, 0); 
+                        step = 5;
+                    }
+                }
+                // break;
+            }
+            break;    
+        }
+    }
+
+
+    // if( g2.yinxin_out != 0)
+    // {
+    //     if(step == 0){
+    //         if(rcin_7 < 1700){
+    //         jiebao_time_ms = millis();
+    //         }
+    //         else if(rcin_7 > 1800){
+    //             if(millis() - jiebao_time_ms < 500){
+    //                 SRV_Channels::set_output_pwm(function_jiebao, 2000); 
+    //             }
+    //             else{
+    //                 SRV_Channels::set_output_pwm(function_jiebao, 0); 
+    //                 step = 1;
+    //             }
+    //         }
+    //     }
+    //     if(step == 1){
+    //         SRV_Channels::set_output_pwm(function_jiebao, 0); 
+    //         if(rcin_7 < 1700)
+    //         {
+    //             step = 2;
+    //         }
+    //     }
+    //     if(step == 2){
+    //         if(rcin_7 < 1700){
+    //         jiebao_time_ms = millis();
+    //         }
+    //         else if(rcin_7 > 1800){
+    //             if(millis() - jiebao_time_ms < 500){
+    //                 SRV_Channels::set_output_pwm(function_jiebao, 2000); 
+    //             }
+    //             else{
+    //                 SRV_Channels::set_output_pwm(function_jiebao, 0); 
+    //                 step = 3;
+    //             }
+    //         }
+    //     }
+    // }
+    
+///
+    // if(copter.flightmode->mode_number() != Mode::Number::ATLO)
+    // {
+    //     jiebao_time_ms = millis();
+    // }
+///
+
+    // if(copter.flightmode->mode_number() == Mode::Number::ATLO)
+    // {
+    //     //qibao chufa
+    //     if(step == 3)
+    //     {
+    //             if(distance_cm >= 20.0)
+    //             {
+    //                 qibao_time_ms = millis();
+    //                 SRV_Channels::set_output_pwm(function_qibao, 0); 
+    //             }
+    //             else if(distance_cm <= 20.0)
+    //             {
+                    
+    //                 if(millis() - qibao_time_ms < 500)
+    //                 {
+    //                     SRV_Channels::set_output_pwm(function_qibao, 2000); 
+    //                 } else if(millis() - qibao_time_ms >= 500)
+    //                 {
+    //                     SRV_Channels::set_output_pwm(function_qibao, 0); 
+    //                 }
+                    
+    //             }
+
+    //     }
+    //     } else{
+    //         // SRV_Channels::set_output_pwm(function_jiebao, 0); 
+    //         SRV_Channels::set_output_pwm(function_qibao, 0); 
+    //     }
+
+///
+    // }
+
+        // uint16_t rcin_7 = hal.rcin->read(g2.yinxin_channel);
+    // // uint16_t rcin_8 = hal.rcin->read(g2.yinxin_channel+1);
+    // SRV_Channel::Aux_servo_function_t function_1 = SRV_Channels::get_motor_function(4);// set servo5 as prearm
+    // SRV_Channel::Aux_servo_function_t function_2 = SRV_Channels::get_motor_function(5);// set servo6 as boom
+
+    // if (g2.yinxin_switch != 0 ){
+    // if (rcin_7 < 1200)
+    // {
+    //     last_set_prearm_time_ms = millis();
+    // }
+    // if (rcin_7 > 1800) 
+    // {
+    //     if( millis() - last_set_prearm_time_ms < 1000)
+    //     {
+    //         SRV_Channels::set_output_pwm(function_1, 2000);
+    //         SRV_Channels::set_output_pwm(function_2, 0); 
+    //     }
+    //     else
+    //     {
+    //         SRV_Channels::set_output_pwm(function_1, 0);
+    //         SRV_Channels::set_output_pwm(function_2, 2000);
+    //     }  
+    // }
+    // else {
+    //     SRV_Channels::set_output_pwm(function_1, 0);
+    //     SRV_Channels::set_output_pwm(function_2, 0);
+    // }
+    // }
+
+
+    // else 
+    // {
+    //     SRV_Channels::set_output_pwm(function_1, 0); 
+    // }
+    // if (rcin_8 > 1800) 
+    // {
+    //     SRV_Channels::set_output_pwm(function_2, 2000);
+        
+    // }
+    // else 
+    // {
+    //     SRV_Channels::set_output_pwm(function_2, 0); 
+    // }
+    // }
+///
+
+    // gcs().send_text(MAV_SEVERITY_CRITICAL,
+    //             "step: %d down: %d",
+    //             step,
+    //             int(distance_down_cm)
+    //             );
 }
 
 // Full rate logging of attitude, rate and pid loops
@@ -634,6 +937,16 @@ void Copter::one_hz_loop()
 #endif
 
     AP_Notify::flags.flying = !ap.land_complete;
+
+    gcs().send_text(MAV_SEVERITY_CRITICAL,
+                "F:%.1f %d %d",
+                k210.cz/10.0f,
+                k210.cx,
+                k210.cy
+                );
+    
+
+
 }
 
 void Copter::init_simple_bearing()

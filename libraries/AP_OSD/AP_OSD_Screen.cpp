@@ -999,6 +999,8 @@ const AP_Param::GroupInfo AP_OSD_Screen::var_info[] = {
     // @Range: 0 15
     AP_SUBGROUPINFO(rngf, "RNGF", 60, AP_OSD_Screen, AP_OSD_Setting),
 
+    AP_SUBGROUPINFO(rngud, "RNGUD", 61, AP_OSD_Screen, AP_OSD_Setting),
+
     AP_GROUPEND
 };
 
@@ -2153,6 +2155,25 @@ void AP_OSD_Screen::draw_rngf(uint8_t x, uint8_t y)
     }
 }
 
+void AP_OSD_Screen::draw_rngud(uint8_t x, uint8_t y)
+{
+    RangeFinder *rangefinder = RangeFinder::get_singleton();
+    if (rangefinder == nullptr) {
+       return;
+    }
+    // if (rangefinder->status_orient(ROTATION_PITCH_270) <= RangeFinder::Status::NoData) {
+    //     backend->write(x, y, false, "%c----%c", SYMBOL(SYM_RNGFD), u_icon(DISTANCE));
+    // } else {
+        const float distance_up = rangefinder->distance_orient(ROTATION_YAW_45);
+        const float distance_down = rangefinder->distance_orient(ROTATION_YAW_135);
+        // const char up[] = "up:";
+        // const char down[] = "down:";
+        // const char *format = distance < 9.995 ? "%c %1.2f%c" : "%c%2.2f%c";
+        backend->write(x, y, false, "%.1f%c %.1f%c ",u_scale(DISTANCE, distance_up), u_icon(DISTANCE),
+                                                     u_scale(DISTANCE, distance_down), u_icon(DISTANCE));
+    // }
+}
+
 #define DRAW_SETTING(n) if (n.enabled) draw_ ## n(n.xpos, n.ypos)
 
 #if HAL_WITH_OSD_BITMAP || HAL_WITH_MSP_DISPLAYPORT
@@ -2178,6 +2199,7 @@ void AP_OSD_Screen::draw(void)
 #endif
 
     DRAW_SETTING(rngf);
+    DRAW_SETTING(rngud);
     DRAW_SETTING(waypoint);
     DRAW_SETTING(xtrack_error);
     DRAW_SETTING(bat_volt);

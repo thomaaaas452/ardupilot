@@ -177,7 +177,7 @@ Mode *Copter::mode_from_mode_num(const Mode::Number mode)
 
 #if MODE_ATLO_ENABLED == ENABLED
         case Mode::Number::ATLO:
-            ret = &mode_atlo;
+            ret = &mode_attackloiter;
             break;
 #endif
 
@@ -187,6 +187,17 @@ Mode *Copter::mode_from_mode_num(const Mode::Number mode)
             break;
 #endif
 
+#if MODE_CTALTHOLD_ENABLED == ENABLED
+        case Mode::Number::CTALTHOLD:
+            ret = &mode_ctalthold;
+            break;
+#endif
+
+#if MODE_CTLOITER_ENABLED == ENABLED
+        case Mode::Number::CTLOITER:
+            ret = &mode_ctloiter;
+            break;
+#endif
         default:
             break;
     }

@@ -664,9 +664,30 @@ public:
     AP_Float                acro_y_rate;
 #endif
 
+#if MODE_ATLO_ENABLED == ENABLED 
+    AP_Float                atlo_pitch;
+    AP_Float                atlo_roll;
+    AP_Float                atlo_climb;
+#endif
+
+#if MODE_SEMIAUTO_ENABLED == ENABLED 
+    AP_Float                half_pitch;
+    AP_Float                half_roll;
+    // AP_Float                half_yaw; 
+    AP_Float                half_rdist_cm;
+    AP_Float                half_fdist_cm;
+    AP_Float                half_yawd;
+#endif
+    AP_Float                max_alt_cm;
+    AP_Int8                 yinxin_out;
+    AP_Float                up_speed;
+    AP_Int8                 yinxin_channel; // 1代表距离触发，2代表高度触发
+
     AP_Float                pilot_y_rate;
     AP_Float                pilot_y_expo;
     AP_Int8                 surftrak_mode;
+
+
 };
 
 extern const AP_Param::Info        var_info[];

@@ -33,7 +33,12 @@ public:
 
     uint8_t cx;
     uint8_t cy;
-    uint8_t cz;
+    uint16_t cz;
+
+    // uint8_t check;
+    // uint8_t data_now;
+    // uint8_t high;
+    // uint8_t low;
 
     uint32_t last_frame_ms;
 

@@ -220,6 +220,8 @@ public:
     friend class ModeTurtle;
     friend class ModeAttackLoiter;
     friend class ModeSemiAuto;
+    friend class ModeCtAlthold;
+    friend class ModeCtLoiter;
 
     Copter(void);
 
@@ -598,7 +600,8 @@ private:
         SMARTRTL           = 3,
         SMARTRTL_LAND      = 4,
         TERMINATE          = 5,
-        AUTO_DO_LAND_START = 6
+        AUTO_DO_LAND_START = 6,
+        SEMIAUTO           = 7
     };
 
     enum class FailsafeOption {
@@ -666,6 +669,7 @@ private:
     void throttle_loop();
     void update_batt_compass(void);
     void update_K210(void);
+    void update_height2servo(void);
     void fourhundred_hz_logging();
     void ten_hz_logging_loop();
     void twentyfive_hz_logging();
@@ -1001,6 +1005,12 @@ private:
 #endif
 #if MODE_SEMIAUTO_ENABLED == ENABLED
     ModeSemiAuto mode_semiauto;
+#endif
+#if MODE_CTALTHOLD_ENABLED == ENABLED
+    ModeCtAlthold mode_ctalthold;
+#endif
+#if MODE_CTLOITER_ENABLED == ENABLED
+    ModeCtLoiter mode_ctloiter;
 #endif
 
     // mode.cpp

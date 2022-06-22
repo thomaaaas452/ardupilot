@@ -79,16 +79,22 @@ void AP_K210::update()
         case 4:
             _cz_high_temp = data;
             _step = 5;
+            break;
         
         case 5:
             _cz_low_temp = data;
             _step = 6;
+            break;
 
         case 6:
             checksum = _cx_temp + _cy_temp ;
+            // check = checksum;
+            // data_now = data;
+            // high = _cz_high_temp;
+            // low = _cz_low_temp;
             if(checksum == data) {
-                cx = _cx_temp*6;
-                cy = _cy_temp*6;
+                cx = _cx_temp*3;
+                cy = _cy_temp*3;
                 cz = _cz_high_temp*256+_cz_low_temp;
                 last_frame_ms = AP_HAL::millis();
             }

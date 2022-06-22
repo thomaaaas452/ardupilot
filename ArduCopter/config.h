@@ -323,16 +323,25 @@
 # define MODE_TURTLE_ENABLED !HAL_MINIMIZE_FEATURES && !defined(DISABLE_DSHOT) && FRAME_CONFIG != HELI_FRAME
 #endif
 
-// Loiter mode - allows vehicle to hold global position
+// Atlo mode - allows vehicle to fly to the target automatically
 #ifndef MODE_ATLO_ENABLED
 # define MODE_ATLO_ENABLED ENABLED
 #endif
 
-// Loiter mode - allows vehicle to hold global position
+// Semiauto mode - allows vehicle fly automatically using its optflow and rfs
 #ifndef MODE_SEMIAUTO_ENABLED
 # define MODE_SEMIAUTO_ENABLED ENABLED
 #endif
 
+// CtAlthold mode - althold mode and using throttle to control height directly
+#ifndef MODE_CTALTHOLD_ENABLED
+# define MODE_CTALTHOLD_ENABLED ENABLED
+#endif
+
+// CtLoiter mode - loiter mode and using throttle to control height directly
+#ifndef MODE_CTLOITER_ENABLED
+# define MODE_CTLOITER_ENABLED ENABLED
+#endif
 //////////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////

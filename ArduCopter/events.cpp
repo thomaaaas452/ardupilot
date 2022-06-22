@@ -36,6 +36,9 @@ void Copter::failsafe_radio_on_event()
         case FS_THR_ENABLED_AUTO_RTL_OR_RTL:
             desired_action = FailsafeAction::AUTO_DO_LAND_START;
             break;
+        case FS_THR_ENABLED_SEMIAUTO:
+            desired_action = FailsafeAction::SEMIAUTO;
+            break;
         default:
             desired_action = FailsafeAction::LAND;
     }
@@ -408,6 +411,11 @@ void Copter::do_failsafe_action(FailsafeAction action, ModeReason reason){
         case FailsafeAction::AUTO_DO_LAND_START:
             set_mode_auto_do_land_start_or_RTL(reason);
             break;
+        case FailsafeAction::SEMIAUTO:
+            set_mode(Mode::Number::SEMIAUTO, reason);
+            AP_Notify::events.failsafe_mode_change = 1;
+            break;
+
     }
 
 #if GRIPPER_ENABLED == ENABLED

@@ -1111,6 +1111,44 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("SURFTRAK_MODE", 51, ParametersG2, surftrak_mode, (uint8_t)Copter::SurfaceTracking::Surface::GROUND),
 
+#if MODE_ATLO_ENABLED == ENABLED
+
+    AP_GROUPINFO("ATLO_PITCH", 52, ParametersG2, atlo_pitch, -800.0),
+
+    AP_GROUPINFO("ATLO_ROLL", 53, ParametersG2, atlo_roll, 350.0),
+
+    AP_GROUPINFO("ATLO_CLIMB", 54, ParametersG2, atlo_climb, 30.0),
+    
+#endif
+
+#if MODE_SEMIAUTO_ENABLED == ENABLED
+
+    AP_GROUPINFO("HALF_PITCH", 55, ParametersG2, half_pitch, -650.0),
+
+    AP_GROUPINFO("HALF_ROLL", 56, ParametersG2, half_roll, 350.0),
+
+    // AP_GROUPINFO("HALF_YAW", 57, ParametersG2, half_yaw, -50.0f),
+
+    AP_GROUPINFO("HALF_RDIST_CM", 57, ParametersG2, half_rdist_cm, 100.0),
+
+    AP_GROUPINFO("HALF_FDIST_CM", 58, ParametersG2, half_fdist_cm, 60.0),
+
+    AP_GROUPINFO("HALF_YAWD", 59, ParametersG2, half_yawd, 15.0),
+
+
+    
+#endif
+
+    AP_GROUPINFO("MAX_ALT_CM", 60, ParametersG2, max_alt_cm, 150),
+
+    AP_GROUPINFO("YINXIN_OUT", 61, ParametersG2, yinxin_out, 0),
+
+    AP_GROUPINFO("UP_SPEED", 62, ParametersG2, up_speed, 10.0f),
+
+    AP_GROUPINFO("YINXIN_CH", 63, ParametersG2, yinxin_channel, 6),
+
+
+
     AP_GROUPEND
 };
 
