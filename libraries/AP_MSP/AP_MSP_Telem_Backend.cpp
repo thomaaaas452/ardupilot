@@ -860,20 +860,13 @@ MSPCommandResult AP_MSP_Telem_Backend::msp_process_out_attitude(sbuf_t *dst)
     AP_AHRS &ahrs = AP::ahrs();
     WITH_SEMAPHORE(ahrs.get_semaphore());
 
-    RangeFinder *rangefinder = AP::rangefinder();
-    float rf_f = rangefinder->distance_cm_orient(ROTATION_YAW_45);
-    float rf_d = rangefinder->distance_cm_orient(ROTATION_YAW_135);
-
-
     const struct PACKED {
         int16_t roll;
         int16_t pitch;
         int16_t yaw;
     } attitude {
-        // roll : int16_t(ahrs.roll_sensor * 0.1),     // centidegress to decidegrees
-        // pitch : int16_t(ahrs.pitch_sensor * 0.1),   // centidegress to decidegrees
-        roll : int16_t(rf_f),                       // centidegress to decidegrees
-        pitch : int16_t(rf_d),                      // centidegress to decidegrees
+        roll : int16_t(ahrs.roll_sensor * 0.1),     // centidegress to decidegrees
+        pitch : int16_t(ahrs.pitch_sensor * 0.1),   // centidegress to decidegrees
         yaw : int16_t(ahrs.yaw_sensor * 0.01)       // centidegress to degrees
     };
 
@@ -886,15 +879,11 @@ MSPCommandResult AP_MSP_Telem_Backend::msp_process_out_altitude(sbuf_t *dst)
     home_state_t home_state;
     update_home_pos(home_state);
 
-    RangeFinder *rangefinder = AP::rangefinder();
-    float dist2ground_cm = rangefinder->distance_cm_orient(ROTATION_PITCH_270);
-
     const struct PACKED {
         int32_t rel_altitude_cm;    // relative altitude cm
         int16_t vspeed_cms;         // climb rate cm/s
     } altitude {
-        // rel_altitude_cm : home_state.rel_altitude_cm,
-        rel_altitude_cm : int32_t(dist2ground_cm),
+        rel_altitude_cm : home_state.rel_altitude_cm,
         vspeed_cms : int16_t(get_vspeed_ms() * 100)
     };
 
