@@ -159,7 +159,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #endif
     SCHED_TASK_CLASS(AP_Notify,            &copter.notify,              update,          50,  90,  78),
     SCHED_TASK(one_hz_loop,            1,    100,  81),
-    SCHED_TASK(update_K210,           400,   100,  82),
+    SCHED_TASK(update_K210,           400,   100,  82),                 //单个循环中，更新K210驱动
     SCHED_TASK(update_height2servo,   10,    100,  83),
     SCHED_TASK(ekf_check,             10,     75,  84),
     SCHED_TASK(check_vibration,       10,     50,  87),
@@ -496,6 +496,8 @@ void Copter::update_batt_compass(void)
         compass.read();
     }
 }
+
+// 更新K210驱动
 void Copter::update_K210(void)
 {
     k210.update();

@@ -49,7 +49,7 @@ void Copter::failsafe_radio_on_event()
         gcs().send_text(MAV_SEVERITY_WARNING, "Radio Failsafe - Disarming");
         arming.disarm(AP_Arming::Method::RADIOFAILSAFE);
         desired_action = FailsafeAction::NONE;
-
+        //飞行模式添加
     } else if (flightmode->is_landing() && ((battery.has_failsafed() && battery.get_highest_failsafe_priority() <= FAILSAFE_LAND_PRIORITY))) {
         // Allow landing to continue when battery failsafe requires it (not a user option)
         gcs().send_text(MAV_SEVERITY_WARNING, "Radio + Battery Failsafe - Continuing Landing");

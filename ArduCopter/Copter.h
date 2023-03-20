@@ -69,7 +69,7 @@
 #include <AC_Sprayer/AC_Sprayer.h>          // Crop sprayer library
 #include <AP_ADSB/AP_ADSB.h>                // ADS-B RF based collision avoidance module library
 #include <AP_Proximity/AP_Proximity.h>      // ArduPilot proximity sensor library
-#include <AP_K210/AP_K210.h>
+#include <AP_K210/AP_K210.h>                // K210驱动
 
 // Configuration
 #include "defines.h"
@@ -218,10 +218,10 @@ public:
     friend class ModeZigZag;
     friend class ModeAutorotate;
     friend class ModeTurtle;
-    friend class ModeAttackLoiter;
-    friend class ModeSemiAuto;
-    friend class ModeCtAlthold;
-    friend class ModeCtLoiter;
+    friend class ModeAttackLoiter;    // 基于定点模式的攻击模式
+    friend class ModeSemiAuto;        // 半自主模式
+    friend class ModeCtAlthold;       // 测试用，使用油门直接控制高度的定高模式
+    friend class ModeCtLoiter;        // 测试用，使用油门直接控制高度的定点模式
 
     Copter(void);
 
@@ -245,7 +245,7 @@ private:
 
     AP_Logger logger;
 
-    AP_K210 k210{};
+    AP_K210 k210{};        // K210驱动
 
     // flight modes convenience array
     AP_Int8 *flight_modes;
@@ -668,7 +668,7 @@ private:
     void rc_loop();
     void throttle_loop();
     void update_batt_compass(void);
-    void update_K210(void);
+    void update_K210(void); //k210驱动更新
     void update_height2servo(void);
     void fourhundred_hz_logging();
     void ten_hz_logging_loop();
@@ -1000,7 +1000,8 @@ private:
 #if MODE_TURTLE_ENABLED == ENABLED
     ModeTurtle mode_turtle;
 #endif
-#if MODE_ATLO_ENABLED == ENABLED
+// 下面为自定义模式添加格式
+#if MODE_ATLO_ENABLED == ENABLED            
     ModeAttackLoiter mode_attackloiter;
 #endif
 #if MODE_SEMIAUTO_ENABLED == ENABLED
@@ -1012,6 +1013,7 @@ private:
 #if MODE_CTLOITER_ENABLED == ENABLED
     ModeCtLoiter mode_ctloiter;
 #endif
+//  
 
     // mode.cpp
     Mode *mode_from_mode_num(const Mode::Number mode);

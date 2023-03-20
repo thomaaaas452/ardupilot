@@ -5,8 +5,9 @@
 /*
  * Init and run calls for loiter flight mode
  */
+// 本模式基于Loiter（定点模式）进行修改设计
 
-// loiter_init - initialise loiter controller
+// 初始化（该函数不是特别关键）
 bool ModeSemiAuto::init(bool ignore_checks)
 {
         // apply SIMPLE mode transform to pilot inputs
@@ -54,15 +55,22 @@ bool ModeSemiAuto::init(bool ignore_checks)
     return true;
 }
 
+//主函数
 void ModeSemiAuto::run()
 {
+    // 从K210读取目标的坐标
     int16_t target_x = copter.k210.cx;
     int16_t target_y = copter.k210.cy;
+    // 定义时间，用于进入攻击模式
     static uint32_t change_time_ms = 0;
-
+    
+    // 右前测距仪读数
     float range_rf_cm = copter.rangefinder.distance_cm_orient(ROTATION_YAW_45);
+    // 右后测距仪读数
     float range_rd_cm = copter.rangefinder.distance_cm_orient(ROTATION_YAW_135);
+    // 前向测距仪读数
     float range_front_cm = copter.k210.cz/10;
+    // 右侧测距仪读数平均值
     float range_ave = (range_rd_cm + range_rf_cm)*0.5;
 
     // if((target_x != 159)&&(target_y != 120))
@@ -70,6 +78,7 @@ void ModeSemiAuto::run()
         // copter.set_mode(Mode::Number::ATLO, ModeReason::MISSION_END);
     // }
 
+    // 当发现目标超过0.5s，则进入攻击模式
     if((target_x == 159)&&(target_y == 120))
     {
         change_time_ms = millis();
@@ -86,13 +95,19 @@ void ModeSemiAuto::run()
     //             target_x,
     //             target_y);
 
+    // 较小的右侧测距仪读数
     float range_r_min_cm = range_rf_cm>range_rd_cm ? range_rd_cm : range_rf_cm;
 
+    // 横滚输出值
     float target_roll = 0.0f;
+    // 俯仰输出值
     float target_pitch = 0.0f;
+    // 偏航速率输出值
     float target_yaw_rate = 0.0f;
+    // 升降速度输出值
     float target_climb_rate = 0.0f;
 
+    // 若右侧两测距仪读数相差过大，则将较小读数作为平均值读数
     if(abs(range_rf_cm - range_rd_cm)>=250.0f)
     {
         range_ave = range_r_min_cm;
@@ -103,6 +118,7 @@ void ModeSemiAuto::run()
 
         update_simple_mode();
 
+        // 右侧平均距离大于预设值，则向右横滚，若小于预设值的0.9倍，则向左横滚，其他情况下横滚为0
         if((range_ave > g2.half_rdist_cm))
         {
             target_roll = g2.half_roll*(range_ave-g2.half_rdist_cm)*0.025 + 50;
@@ -114,34 +130,22 @@ void ModeSemiAuto::run()
         } else {
             target_roll = 0;
         }
+        // 若右侧侧距仪最小值小于0.8，认为无人机此时离墙较近，需要向左横滚。
         if(range_r_min_cm < 80.0f)
         {
             target_roll = -1*g2.half_roll;
         }
 
 //前后测距仪离1m时墙的距离，前面1642.84，后面1971.94
+        // 为防止无人机始终左右摇摆，设定当前向速度小于某一值时才能进行偏航。
         if(abs(target_pitch) - abs(g2.half_pitch)*0.53<0.01f)
         // if(abs(target_roll) - abs(g2.half_roll)*0.72 < 0.01f)
         {
             if(range_rd_cm - range_rf_cm > g2.half_yawd)
             {
-                // target_yaw_rate = g2.half_yaw*(range_rd_cm - range_rf_cm)/60;
-                // if(abs(target_yaw_rate)-abs(g2.half_yaw)>=0.01f){
-                //     target_yaw_rate = g2.half_yaw;
-                // }
-                // else if(abs(target_yaw_rate)-0.5*abs(g2.half_yaw)<=0.01f){
-                //     target_yaw_rate = 0.5*g2.half_yaw;
-                // } 
                 target_yaw_rate = -100;         
             } else if(range_rd_cm - range_rf_cm <= -1*g2.half_yawd)
             {
-                // target_yaw_rate = g2.half_yaw*(range_rd_cm - range_rf_cm)/60;
-                // if(abs(target_yaw_rate)-abs(g2.half_yaw)>=0.01f){
-                //     target_yaw_rate = -g2.half_yaw;
-                // }
-                // else if(abs(target_yaw_rate)-0.5*abs(g2.half_yaw)<=0.01f){
-                //     target_yaw_rate = -0.5*g2.half_yaw;
-                // }
                 target_yaw_rate = 100;
             } else {
                     target_yaw_rate = 0;
@@ -150,11 +154,9 @@ void ModeSemiAuto::run()
             target_yaw_rate = 0;
         }
         
-
-        // if(abs(target_roll) - 250 < 0.01f){
+        // 当无人机横滚速度小于某一值时，才能进行俯仰（前进后退运动）
         if(abs(target_roll) - abs(g2.half_roll)*0.72 < 0.01f){    
             if(range_front_cm > g2.half_fdist_cm){
-                // target_pitch = g2.half_pitch*(range_front_cm - g2.half_fdist_cm) * 0.02;
                 target_pitch = g2.half_pitch;
                 if(abs(target_pitch)-abs(g2.half_pitch)>=0.01f){
                     target_pitch = g2.half_pitch;
@@ -190,6 +192,7 @@ void ModeSemiAuto::run()
         // target_roll = channel_roll->get_control_in();
         // target_pitch = channel_pitch->get_control_in();
 
+    // 下面为与定点模式相同的内容。
         float angle_limit = attitude_control->get_althold_lean_angle_max_cd();
 
         // limit max lean angle

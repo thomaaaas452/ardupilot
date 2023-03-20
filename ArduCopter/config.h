@@ -324,21 +324,25 @@
 #endif
 
 // Atlo mode - allows vehicle to fly to the target automatically
+// 定点下的攻击模式，使无人机在定点模式下自动冲撞目标
 #ifndef MODE_ATLO_ENABLED
 # define MODE_ATLO_ENABLED ENABLED
 #endif
 
 // Semiauto mode - allows vehicle fly automatically using its optflow and rfs
+// 半自主模式，无人机使用光流与激光测距仪进行自主飞行
 #ifndef MODE_SEMIAUTO_ENABLED
 # define MODE_SEMIAUTO_ENABLED ENABLED
 #endif
 
 // CtAlthold mode - althold mode and using throttle to control height directly
+// 直接控制高度的定高模式，使用油门直接对无人机当前高度进行控制，而不是控制无人机垂直速度
 #ifndef MODE_CTALTHOLD_ENABLED
 # define MODE_CTALTHOLD_ENABLED ENABLED
 #endif
 
 // CtLoiter mode - loiter mode and using throttle to control height directly
+// 直接控制高度的定点模式，使用油门直接对无人机当前高度进行控制，而不是控制无人机垂直速度
 #ifndef MODE_CTLOITER_ENABLED
 # define MODE_CTLOITER_ENABLED ENABLED
 #endif
