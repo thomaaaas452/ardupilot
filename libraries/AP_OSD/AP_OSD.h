@@ -196,8 +196,8 @@ private:
     AP_OSD_Setting vtx_power{false, 0, 0};
     AP_OSD_Setting hgt_abvterr{false, 23, 7};
     AP_OSD_Setting fence{false, 14, 9};
-    AP_OSD_Setting rngf{false, 0, 0};
-    AP_OSD_Setting rngud{false, 0, 0};
+    AP_OSD_Setting rngf{false, 0, 0}; 
+    AP_OSD_Setting rngud{false, 0, 0}; //显示右侧两个测距仪距离
 #if HAL_PLUSCODE_ENABLE
     AP_OSD_Setting pluscode{false, 0, 0};
 #endif

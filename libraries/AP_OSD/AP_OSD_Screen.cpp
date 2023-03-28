@@ -2155,6 +2155,7 @@ void AP_OSD_Screen::draw_rngf(uint8_t x, uint8_t y)
     }
 }
 
+// 显示右侧两个测距仪距离
 void AP_OSD_Screen::draw_rngud(uint8_t x, uint8_t y)
 {
     RangeFinder *rangefinder = RangeFinder::get_singleton();
@@ -2164,8 +2165,8 @@ void AP_OSD_Screen::draw_rngud(uint8_t x, uint8_t y)
     // if (rangefinder->status_orient(ROTATION_PITCH_270) <= RangeFinder::Status::NoData) {
     //     backend->write(x, y, false, "%c----%c", SYMBOL(SYM_RNGFD), u_icon(DISTANCE));
     // } else {
-        const float distance_up = rangefinder->distance_orient(ROTATION_YAW_45);
-        const float distance_down = rangefinder->distance_orient(ROTATION_YAW_135);
+        const float distance_up = rangefinder->distance_orient(ROTATION_YAW_45); //右前方测距仪
+        const float distance_down = rangefinder->distance_orient(ROTATION_YAW_135); //右后方测距仪
         // const char up[] = "up:";
         // const char down[] = "down:";
         // const char *format = distance < 9.995 ? "%c %1.2f%c" : "%c%2.2f%c";

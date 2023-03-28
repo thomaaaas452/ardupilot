@@ -36,6 +36,7 @@ void Copter::failsafe_radio_on_event()
         case FS_THR_ENABLED_AUTO_RTL_OR_RTL:
             desired_action = FailsafeAction::AUTO_DO_LAND_START;
             break;
+        //无人机失去信号后进入半自主模式
         case FS_THR_ENABLED_SEMIAUTO:
             desired_action = FailsafeAction::SEMIAUTO;
             break;

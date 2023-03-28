@@ -601,7 +601,7 @@ private:
         SMARTRTL_LAND      = 4,
         TERMINATE          = 5,
         AUTO_DO_LAND_START = 6,
-        SEMIAUTO           = 7
+        SEMIAUTO           = 7      // 失控后的操作，半自主
     };
 
     enum class FailsafeOption {
@@ -669,7 +669,7 @@ private:
     void throttle_loop();
     void update_batt_compass(void);
     void update_K210(void); //k210驱动更新
-    void update_height2servo(void);
+    void update_height2servo(void); //起爆函数
     void fourhundred_hz_logging();
     void ten_hz_logging_loop();
     void twentyfive_hz_logging();

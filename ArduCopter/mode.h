@@ -391,7 +391,7 @@ protected:
 private:
 
 };
-
+// 测试用（定高模式，油门直接控制高度）
 class ModeCtAlthold : public Mode {
 
 public:
@@ -1230,6 +1230,7 @@ private:
 
 };
 
+// 测试用（定点模式，油门直接控制高度）
 class ModeCtLoiter : public Mode {
 
 public:

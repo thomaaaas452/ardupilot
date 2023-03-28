@@ -159,8 +159,8 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
 #endif
     SCHED_TASK_CLASS(AP_Notify,            &copter.notify,              update,          50,  90,  78),
     SCHED_TASK(one_hz_loop,            1,    100,  81),
-    SCHED_TASK(update_K210,           400,   100,  82),                 //单个循环中，更新K210驱动
-    SCHED_TASK(update_height2servo,   10,    100,  83),
+    SCHED_TASK(update_K210,           400,   100,  82),                 // 单个循环中，更新K210驱动
+    SCHED_TASK(update_height2servo,   10,    100,  83),                 // 触发引信函数（包含高度触发、距离触发引信）
     SCHED_TASK(ekf_check,             10,     75,  84),
     SCHED_TASK(check_vibration,       10,     50,  87),
     SCHED_TASK(gpsglitch_check,       10,     50,  90),
@@ -503,113 +503,112 @@ void Copter::update_K210(void)
     k210.update();
 }
 
+// 触发引信流程函数
+// 特征信号为PWM方波，占空比为10%，持续时间至少0.4s，需要注意的是在不输出特征信号时，输出特征信号的通道上同样需要输出指定占空比为0的PWM方波。
+// 引信触发包含解保、起爆两个环节；
+// 解保环节需要两次解保，每次解保需要输出特征信号至引信板，两次解保后进入起爆阶段；起爆分为距离起爆和高度起爆，需要提前设定模式（g2.yinxin_channel）
+// 起爆模式同样需要两次特征信号；
+// 距离起爆: 在拨杆或进入自主攻击模式时发出第一次特征信号；在距离达到设定值时（目前设定的是20cm）发出第二次特征信号，完成起爆。
+// 高度起爆: 在拨杆后进入高度起爆，到达设定的初步高度后（目前设定的是90-150cm）发出第一次特征信号；到达设定的最终高度后（目前设定的是110-130cm）发出第二次特征信号，完成起爆。
 void Copter::update_height2servo(void)
 {
 
-    float distance_front_cm = (int16_t)(k210.cz*0.1);
-    float distance_down_cm = rangefinder.distance_cm_orient(ROTATION_PITCH_270);
-    static uint8_t step = 0;
-    static uint32_t jiebao_time_ms = 0;
+    float distance_front_cm = (int16_t)(k210.cz*0.1); //前向距离
+    float distance_down_cm = rangefinder.distance_cm_orient(ROTATION_PITCH_270); // 下向距离 
+    static uint8_t step = 0;  //步骤
+    static uint32_t jiebao_time_ms = 0; // 解保时间
     // bool jiebao_success = false;
-    static uint32_t qibao_time_ms = 0;
+    static uint32_t qibao_time_ms = 0; // 起爆时间
 
-    uint16_t rcin_jiebao_first = hal.rcin->read(8);
-    uint16_t rcin_jiebao_second = hal.rcin->read(9);
-    uint16_t rcin_gaodu = hal.rcin->read(6);
-    uint16_t rcin_juli  = hal.rcin->read(7);
+    uint16_t rcin_jiebao_first = hal.rcin->read(8); //第一次解保输入信号为遥控器的第7通道
+    uint16_t rcin_jiebao_second = hal.rcin->read(9); //第二次解保输入信号为遥控器的第8通道
+    uint16_t rcin_gaodu = hal.rcin->read(6); //遥控器的第5通道为选择高度触发模式
+    uint16_t rcin_juli  = hal.rcin->read(7); //遥控器的第6通道为选择前向距离触发模式
 
-    SRV_Channel::Aux_servo_function_t function_jiebao = SRV_Channels::get_motor_function(4); // set servo5 as prearm
-    SRV_Channel::Aux_servo_function_t function_qibao = SRV_Channels::get_motor_function(5);// set servo6 as qibao
+    SRV_Channel::Aux_servo_function_t function_jiebao = SRV_Channels::get_motor_function(4); //设置电（舵）机通道5作为解保信号输出
+    SRV_Channel::Aux_servo_function_t function_qibao = SRV_Channels::get_motor_function(5);  //设置电（舵）机通道6作为起爆信号输出
 
-    SRV_Channels::set_output_pwm(function_jiebao, 0); 
-    SRV_Channels::set_output_pwm(function_qibao, 0); 
+    SRV_Channels::set_output_pwm(function_jiebao, 0); // 设置解保输出通道值为0 
+    SRV_Channels::set_output_pwm(function_qibao, 0);  // 设置起爆输出通道值为0
 
-    if(g2.yinxin_out != 0)
+    if(g2.yinxin_out != 0) //yinxin_out为引信使能参数，0为不使用引信，1为使用引信
     {
         switch(step){
         case 0:
-            if(rcin_jiebao_first < 1800)
+            if(rcin_jiebao_first < 1800) // 指rcin_jiebao_first不拨杆时（位于中低位）
             {
                 jiebao_time_ms = millis();
-                SRV_Channels::set_output_pwm(function_jiebao, 0); 
+                SRV_Channels::set_output_pwm(function_jiebao, 0); //此时第一次解保通道输出PWM占空比为0
             }
-            else if(rcin_jiebao_first > 1800)
+            else if(rcin_jiebao_first > 1800) // rcin_jiebao_first拨杆（位于高位）
             {
+                //在0.5s内连续发出
                 if(millis() - jiebao_time_ms < 500){
-                    SRV_Channels::set_output_pwm(function_jiebao, 2000); 
+                    SRV_Channels::set_output_pwm(function_jiebao, 2000);  //此时第一次解保通道输出PWM占空比为10%
                 }
                 else{
-                    SRV_Channels::set_output_pwm(function_jiebao, 0); 
-                    step = 1;
+                    SRV_Channels::set_output_pwm(function_jiebao, 0);   //此时第一次解保通道输出PWM占空比为0%
+                    step = 1; //这样就完成了第一次解保信号的发出
                 }
             }
             break;
 
         case 1:
-            if(rcin_jiebao_second < 1800)
+            if(rcin_jiebao_second < 1800) // 指rcin_jiebao_second不拨杆时（位于中低位）
             {
                 jiebao_time_ms = millis();
-                SRV_Channels::set_output_pwm(function_jiebao, 0);
+                SRV_Channels::set_output_pwm(function_jiebao, 0); //此时第二次解保通道输出PWM占空比为0
             }
-            else if(rcin_jiebao_second > 1800)
+            else if(rcin_jiebao_second > 1800) // rcin_jiebao_second拨杆（位于高位）
             {
+                //在0.5s内连续发出
                 if(millis() - jiebao_time_ms < 500){
-                    SRV_Channels::set_output_pwm(function_jiebao, 2000); 
+                    SRV_Channels::set_output_pwm(function_jiebao, 2000); //此时第二次解保通道输出PWM占空比为10%
                 }
                 else{
-                    SRV_Channels::set_output_pwm(function_jiebao, 0); 
-                    step = 2;
+                    SRV_Channels::set_output_pwm(function_jiebao, 0);  //此时第二次解保通道输出PWM占空比为0%
+                    step = 2; //这样就完成了第二次解保信号的发出，此时完成引信全部解保
                 }
             }
             break;
 
         case 2:
-            if(g2.yinxin_channel == 1)
+            if(g2.yinxin_channel == 1) //yinxin_channel为引信起爆模式选择，1为前向距离触发
             {
-                if((rcin_juli > 1200)&&(copter.flightmode->mode_number() != Mode::Number::ATLO))
+                //当距离通道输出不拨杆（位于中高位），或飞行模式不为攻击模式（即，飞行模式为攻击模式时或拨杆至低位时，执行下面程序）
+                if((rcin_juli > 1200)&&(copter.flightmode->mode_number() != Mode::Number::ATLO)) 
                 {
                     qibao_time_ms = millis();
-                    SRV_Channels::set_output_pwm(function_qibao, 0); 
+                    SRV_Channels::set_output_pwm(function_qibao, 0);  //此时起爆通道输出PWM占空比为0
                 }
                 else{
-                    if(millis() - qibao_time_ms < 500){
-                        SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                    //在0.5s内连续发出
+                    if(millis() - qibao_time_ms < 500){ 
+                        SRV_Channels::set_output_pwm(function_qibao, 2000);  //此时起爆通道输出PWM占空比为10%（起爆第一次信号发出）
                     }
                     else{
-                        SRV_Channels::set_output_pwm(function_qibao, 0); 
+                        SRV_Channels::set_output_pwm(function_qibao, 0); //此时起爆通道输出PWM占空比为10%（起爆第一次信号结束）
                         step = 3;
                     }
                 }
                 // break;  
             }
 
-            else if(g2.yinxin_channel == 2)
+            else if(g2.yinxin_channel == 2) //yinxin_channel为引信起爆模式选择，2为高度距离触发
             {
-                if(rcin_gaodu > 1800){
+                //当高度通道输出不拨杆（位于高位）（即，拨杆至中低位时，执行下面程序）
+                if(rcin_gaodu > 1800){ 
                     step = 3;
                 }
-                // if(rcin_gaodu < 1800)
-                // {
-                //     qibao_time_ms = millis();
-                //     SRV_Channels::set_output_pwm(function_qibao, 0); 
-                // }
-                // else{
-                //     if(millis() - qibao_time_ms < 500){
-                //         SRV_Channels::set_output_pwm(function_qibao, 2000); 
-                //     }
-                //     else{
-                //         SRV_Channels::set_output_pwm(function_qibao, 0); 
-                //         step = 3;
-                //     }
-                // }
-                // break;
+
             }
             break;
 
         case 3:
-            if(g2.yinxin_channel == 1)
+            if(g2.yinxin_channel == 1) //前向距离触发
             {
-                if(distance_front_cm >= 20)
+                //前向距离小于等于20cm时，触发起爆第二次信号，并完成引爆
+                if(distance_front_cm >= 20) 
                 {
                     //6月4日晚上添加
                     qibao_time_ms = millis();
@@ -630,14 +629,16 @@ void Copter::update_height2servo(void)
                 // break;
             }
 
-            if(g2.yinxin_channel == 2)
+            if(g2.yinxin_channel == 2) //高度距离触发
             {
+                // 当距离地面高度为90cm-150cm时，起爆第一次信号发出
                 if((distance_down_cm>150)||(distance_down_cm<90))
                 {
                     qibao_time_ms = millis();
                     SRV_Channels::set_output_pwm(function_qibao, 0); 
                 }
                 else{
+                    // 持续0.5s
                     if(millis() - qibao_time_ms < 500){
                         SRV_Channels::set_output_pwm(function_qibao, 2000); 
                     }
@@ -651,16 +652,18 @@ void Copter::update_height2servo(void)
             break;
 
         case 4:
-            if(g2.yinxin_channel == 2)
+            if(g2.yinxin_channel == 2)//高度距离触发
             {
+                // 当距离地面高度为110cm-130cm时，起爆第一次信号发出
                 if((distance_down_cm > 130)||(distance_down_cm < 110))
                 {
                     qibao_time_ms = millis();
                     SRV_Channels::set_output_pwm(function_qibao, 0); 
                 }
                 else{
+                    // 持续0.5s
                     if(millis() - qibao_time_ms < 500){
-                        SRV_Channels::set_output_pwm(function_qibao, 2000); 
+                        SRV_Channels::set_output_pwm(function_qibao, 2000);  
                     }
                     else{
                         SRV_Channels::set_output_pwm(function_qibao, 0); 
@@ -673,136 +676,6 @@ void Copter::update_height2servo(void)
         }
     }
 
-
-    // if( g2.yinxin_out != 0)
-    // {
-    //     if(step == 0){
-    //         if(rcin_7 < 1700){
-    //         jiebao_time_ms = millis();
-    //         }
-    //         else if(rcin_7 > 1800){
-    //             if(millis() - jiebao_time_ms < 500){
-    //                 SRV_Channels::set_output_pwm(function_jiebao, 2000); 
-    //             }
-    //             else{
-    //                 SRV_Channels::set_output_pwm(function_jiebao, 0); 
-    //                 step = 1;
-    //             }
-    //         }
-    //     }
-    //     if(step == 1){
-    //         SRV_Channels::set_output_pwm(function_jiebao, 0); 
-    //         if(rcin_7 < 1700)
-    //         {
-    //             step = 2;
-    //         }
-    //     }
-    //     if(step == 2){
-    //         if(rcin_7 < 1700){
-    //         jiebao_time_ms = millis();
-    //         }
-    //         else if(rcin_7 > 1800){
-    //             if(millis() - jiebao_time_ms < 500){
-    //                 SRV_Channels::set_output_pwm(function_jiebao, 2000); 
-    //             }
-    //             else{
-    //                 SRV_Channels::set_output_pwm(function_jiebao, 0); 
-    //                 step = 3;
-    //             }
-    //         }
-    //     }
-    // }
-    
-///
-    // if(copter.flightmode->mode_number() != Mode::Number::ATLO)
-    // {
-    //     jiebao_time_ms = millis();
-    // }
-///
-
-    // if(copter.flightmode->mode_number() == Mode::Number::ATLO)
-    // {
-    //     //qibao chufa
-    //     if(step == 3)
-    //     {
-    //             if(distance_cm >= 20.0)
-    //             {
-    //                 qibao_time_ms = millis();
-    //                 SRV_Channels::set_output_pwm(function_qibao, 0); 
-    //             }
-    //             else if(distance_cm <= 20.0)
-    //             {
-                    
-    //                 if(millis() - qibao_time_ms < 500)
-    //                 {
-    //                     SRV_Channels::set_output_pwm(function_qibao, 2000); 
-    //                 } else if(millis() - qibao_time_ms >= 500)
-    //                 {
-    //                     SRV_Channels::set_output_pwm(function_qibao, 0); 
-    //                 }
-                    
-    //             }
-
-    //     }
-    //     } else{
-    //         // SRV_Channels::set_output_pwm(function_jiebao, 0); 
-    //         SRV_Channels::set_output_pwm(function_qibao, 0); 
-    //     }
-
-///
-    // }
-
-        // uint16_t rcin_7 = hal.rcin->read(g2.yinxin_channel);
-    // // uint16_t rcin_8 = hal.rcin->read(g2.yinxin_channel+1);
-    // SRV_Channel::Aux_servo_function_t function_1 = SRV_Channels::get_motor_function(4);// set servo5 as prearm
-    // SRV_Channel::Aux_servo_function_t function_2 = SRV_Channels::get_motor_function(5);// set servo6 as boom
-
-    // if (g2.yinxin_switch != 0 ){
-    // if (rcin_7 < 1200)
-    // {
-    //     last_set_prearm_time_ms = millis();
-    // }
-    // if (rcin_7 > 1800) 
-    // {
-    //     if( millis() - last_set_prearm_time_ms < 1000)
-    //     {
-    //         SRV_Channels::set_output_pwm(function_1, 2000);
-    //         SRV_Channels::set_output_pwm(function_2, 0); 
-    //     }
-    //     else
-    //     {
-    //         SRV_Channels::set_output_pwm(function_1, 0);
-    //         SRV_Channels::set_output_pwm(function_2, 2000);
-    //     }  
-    // }
-    // else {
-    //     SRV_Channels::set_output_pwm(function_1, 0);
-    //     SRV_Channels::set_output_pwm(function_2, 0);
-    // }
-    // }
-
-
-    // else 
-    // {
-    //     SRV_Channels::set_output_pwm(function_1, 0); 
-    // }
-    // if (rcin_8 > 1800) 
-    // {
-    //     SRV_Channels::set_output_pwm(function_2, 2000);
-        
-    // }
-    // else 
-    // {
-    //     SRV_Channels::set_output_pwm(function_2, 0); 
-    // }
-    // }
-///
-
-    // gcs().send_text(MAV_SEVERITY_CRITICAL,
-    //             "step: %d down: %d",
-    //             step,
-    //             int(distance_down_cm)
-    //             );
 }
 
 // Full rate logging of attitude, rate and pid loops

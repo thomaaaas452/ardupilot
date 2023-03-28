@@ -665,22 +665,38 @@ public:
 #endif
 
 #if MODE_ATLO_ENABLED == ENABLED 
+// 攻击模式相关参数
+
+    // 俯仰\前向速度参数
     AP_Float                atlo_pitch;
+    // 俯仰\前向速度参数
     AP_Float                atlo_roll;
+    // 升降速度参数
     AP_Float                atlo_climb;
 #endif
 
 #if MODE_SEMIAUTO_ENABLED == ENABLED 
+// 半自主模式相关参数
+
+    //俯仰\前向速度参数
     AP_Float                half_pitch;
+    //横滚\横向速度参数
     AP_Float                half_roll;
     // AP_Float                half_yaw; 
+    //右方测距仪设定距离
     AP_Float                half_rdist_cm;
+    //前向测距仪设定参数
     AP_Float                half_fdist_cm;
+    //偏航预设距离偏差
     AP_Float                half_yawd;
 #endif
+    //最大飞行高度（下向测距仪）（测试中，未使用）
     AP_Float                max_alt_cm;
-    AP_Int8                 yinxin_out;
+    //引信使能参数（是否启用引信）
+    AP_Int8                 yinxin_out; // 0代表不使用引信，1代表使用引信
+    //上升速度参数（测试中，未使用）
     AP_Float                up_speed;
+    //引信模式参数
     AP_Int8                 yinxin_channel; // 1代表距离触发，2代表高度触发
 
     AP_Float                pilot_y_rate;

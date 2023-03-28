@@ -104,11 +104,12 @@ void ModeLoiter::run()
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->norm_input_dz());
 
-        gcs().send_text(MAV_SEVERITY_CRITICAL,
-        "channelyaw:%.1f,target_yaw:%.1f",
-        channel_yaw->norm_input_dz(),
-        target_yaw_rate
-        );
+        // 测试用，观察输出的动量值
+        // gcs().send_text(MAV_SEVERITY_CRITICAL,
+        // "channelyaw:%.1f,target_yaw:%.1f",
+        // channel_yaw->norm_input_dz(),
+        // target_yaw_rate
+        // );
 
         // get pilot desired climb rate
         target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());

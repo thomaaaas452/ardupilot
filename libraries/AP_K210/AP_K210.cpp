@@ -12,7 +12,7 @@
 */
 
 /*
-   OpenMV library
+   K210 library
 */
 
 #define AP_SERIALMANAGER_OPEN_MV_BAUD         115200
@@ -55,47 +55,47 @@ void AP_K210::update()
 
         switch(_step) {
         case 0:
-            if(data == 0xA5)
+            if(data == 0xA5) // 校验码1
                 _step = 1;
             break;
 
         case 1:
-            if(data == 0x5A)
+            if(data == 0x5A) // 校验码2
                 _step = 2;
             else
                 _step = 0;
             break;
 
         case 2:
-            _cx_temp = data;
+            _cx_temp = data; // x坐标值（缩小了3倍）
             _step = 3;
             break;
 
         case 3:
-            _cy_temp = data;
+            _cy_temp = data; // y坐标值（缩小了3倍）
             _step = 4;
             break;
 
         case 4:
-            _cz_high_temp = data;
-            _step = 5;
+            _cz_high_temp = data; // 前向距离值1
+            _step = 5; 
             break;
         
         case 5:
-            _cz_low_temp = data;
+            _cz_low_temp = data; // 前向距离值2
             _step = 6;
             break;
 
         case 6:
-            checksum = _cx_temp + _cy_temp ;
+            checksum = _cx_temp + _cy_temp ; //校验值
             // check = checksum;
             // data_now = data;
             // high = _cz_high_temp;
             // low = _cz_low_temp;
             if(checksum == data) {
-                cx = _cx_temp*3;
-                cy = _cy_temp*3;
-                cz = _cz_high_temp*256+_cz_low_temp;
+                cx = _cx_temp*3; // 还原x坐标值
+                cy = _cy_temp*3; // 还原y坐标值
+                cz = _cz_high_temp*256+_cz_low_temp; // 还原前向距离
                 last_frame_ms = AP_HAL::millis();
             }
 

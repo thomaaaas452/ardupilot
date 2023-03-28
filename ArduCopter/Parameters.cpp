@@ -1112,39 +1112,41 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
     AP_GROUPINFO("SURFTRAK_MODE", 51, ParametersG2, surftrak_mode, (uint8_t)Copter::SurfaceTracking::Surface::GROUND),
 
 #if MODE_ATLO_ENABLED == ENABLED
+// 攻击模式相关参数
 
+// 俯仰\前向速度参数
     AP_GROUPINFO("ATLO_PITCH", 52, ParametersG2, atlo_pitch, -800.0),
-
+// 俯仰\前向速度参数
     AP_GROUPINFO("ATLO_ROLL", 53, ParametersG2, atlo_roll, 350.0),
-
+// 升降速度参数
     AP_GROUPINFO("ATLO_CLIMB", 54, ParametersG2, atlo_climb, 30.0),
     
 #endif
 
 #if MODE_SEMIAUTO_ENABLED == ENABLED
+// 半自主模式相关参数
 
+//俯仰\前向速度参数
     AP_GROUPINFO("HALF_PITCH", 55, ParametersG2, half_pitch, -650.0),
-
+//横滚\横向速度参数
     AP_GROUPINFO("HALF_ROLL", 56, ParametersG2, half_roll, 350.0),
 
     // AP_GROUPINFO("HALF_YAW", 57, ParametersG2, half_yaw, -50.0f),
-
+//右方测距仪设定距离
     AP_GROUPINFO("HALF_RDIST_CM", 57, ParametersG2, half_rdist_cm, 100.0),
-
+//前向测距仪设定参数
     AP_GROUPINFO("HALF_FDIST_CM", 58, ParametersG2, half_fdist_cm, 60.0),
-
+//偏航预设距离偏差
     AP_GROUPINFO("HALF_YAWD", 59, ParametersG2, half_yawd, 15.0),
 
-
-    
 #endif
-
+//最大飞行高度（下向测距仪）（测试中，未使用）
     AP_GROUPINFO("MAX_ALT_CM", 60, ParametersG2, max_alt_cm, 150),
-
+//引信使能参数（是否启用引信）
     AP_GROUPINFO("YINXIN_OUT", 61, ParametersG2, yinxin_out, 0),
-
+//上升速度参数（测试中，未使用）
     AP_GROUPINFO("UP_SPEED", 62, ParametersG2, up_speed, 10.0f),
-
+//引信模式参数
     AP_GROUPINFO("YINXIN_CH", 63, ParametersG2, yinxin_channel, 6),
 
 

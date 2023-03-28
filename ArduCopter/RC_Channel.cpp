@@ -613,6 +613,9 @@ bool RC_Channel_Copter::do_aux_function(const aux_func_t ch_option, const AuxSwi
             }
             break;
 
+        // 该函数原本用于控制遥控器切换模式作用，即设定一个遥控器特定通道，使其具备拨杆后切换无人机当前模式至指定模式的作用
+        // 此处添加了切换模式至攻击模式、半自主模式的功能
+        // 
         case AUX_FUNC::ATLO:
             do_aux_function_change_mode(Mode::Number::ATLO, ch_flag);
             break;
